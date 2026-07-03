@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แดชบอร์ดรายงานค่าป่วยการ อสม. ประจำเดือน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0c3a5c; --blue:#185fa5; --blue-light:#e6f1fb;
+    --teal:#0f6e56; --teal-light:#e1f5ee;
+    --amber:#854f0b; --amber-light:#faeeda;
+    --red:#a32d2d; --red-light:#fcebeb;
+    --gray-900:#2c2c2a; --gray-600:#5f5e5a; --gray-400:#888780; --gray-200:#d3d1c7; --gray-100:#f1efe8; --gray-50:#f8f7f3;
+    --bg:#f4f3ee; --card:#ffffff; --border:#e2e0d6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Sarabun',sans-serif; background:var(--bg); color:var(--gray-900);
+    font-size:15px; line-height:1.6; padding:24px;
+  }
+  .wrap{max-width:1180px; margin:0 auto;}
+  header{margin-bottom:24px;}
+  header h1{font-size:24px; font-weight:700; color:var(--navy); margin:0 0 6px;}
+  header p{margin:0; color:var(--gray-600); font-size:14px;}
+  .badge-row{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .badge{font-size:12px; padding:4px 10px; border-radius:20px; background:var(--gray-100); color:var(--gray-600); border:0.5px solid var(--border);}
+
+  .kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:12px; margin-bottom:28px;}
+  .kpi{background:var(--card); border:0.5px solid var(--border); border-radius:12px; padding:16px 18px;}
+  .kpi .label{font-size:12.5px; color:var(--gray-600); margin-bottom:6px;}
+  .kpi .value{font-size:26px; font-weight:700; color:var(--navy);}
+  .kpi .sub{font-size:12px; color:var(--gray-400); margin-top:4px;}
+  .kpi.warn .value{color:var(--red);}
+  .kpi.good .value{color:var(--teal);}
+
+  .panel{background:var(--card); border:0.5px solid var(--border); border-radius:12px; padding:20px 22px; margin-bottom:22px;}
+  .panel h2{font-size:17px; font-weight:600; margin:0 0 14px; color:var(--navy);}
+  .panel h2 .count{font-weight:400; color:var(--gray-600); font-size:13px;}
+
+  .alert{background:var(--red-light); border:0.5px solid #f0999577; border-radius:10px; padding:14px 16px; margin-bottom:22px;}
+  .alert h3{margin:0 0 8px; font-size:14.5px; color:var(--red); font-weight:600;}
+  .alert ul{margin:0; padding-left:20px; font-size:13.5px; color:var(--gray-900);}
+  .alert li{margin-bottom:2px;}
+
+  .chart-box{position:relative; width:100%;}
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-bottom:10px; font-size:12.5px; color:var(--gray-600);}
+  .legend span{display:flex; align-items:center; gap:6px;}
+  .dot{width:10px; height:10px; border-radius:2px; display:inline-block;}
+
+  .controls{display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
+  .controls input, .controls select{
+    font-family:'Sarabun',sans-serif; font-size:13.5px; padding:8px 12px; border:0.5px solid var(--gray-200);
+    border-radius:8px; background:#fff; color:var(--gray-900);
+  }
+  .controls input{flex:1; min-width:180px;}
+
+  .table-wrap{overflow-x:auto; border:0.5px solid var(--border); border-radius:10px;}
+  table{width:100%; border-collapse:collapse; font-size:12.5px; white-space:nowrap;}
+  thead th{
+    background:var(--navy); color:#fff; text-align:left; padding:9px 10px; font-weight:600;
+    position:sticky; top:0; cursor:pointer; user-select:none;
+  }
+  thead th:hover{background:var(--blue);}
+  tbody td{padding:8px 10px; border-top:0.5px solid var(--border);}
+  tbody tr:nth-child(even){background:var(--gray-50);}
+  tbody tr.no-data{background:var(--red-light);}
+  tbody tr:hover{background:var(--blue-light);}
+  .num{text-align:right; font-variant-numeric:tabular-nums;}
+  .tag{font-size:11px; padding:2px 8px; border-radius:10px; font-weight:600;}
+  .tag.ok{background:var(--teal-light); color:var(--teal);}
+  .tag.no{background:var(--red-light); color:var(--red);}
+  .diff-pos{color:var(--amber); font-weight:600;}
+  .diff-neg{color:var(--red); font-weight:600;}
+  .diff-zero{color:var(--gray-600);}
+
+  footer{color:var(--gray-400); font-size:12px; text-align:center; margin-top:8px; padding-top:14px; border-top:0.5px solid var(--border);}
+  @media(max-width:640px){ .kpi .value{font-size:21px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>แดชบอร์ดรายงานค่าป่วยการ อสม. ประจำเดือน</h1>
+    <p>จังหวัดอุบลราชธานี &middot; ข้อมูลจากชีต Database_new &middot; ไฟล์ "รายงานค่าป่วยการ อสม.2026_New"</p>
+    <div class="badge-row">
+      <span class="badge">25 อำเภอ</span>
+      <span class="badge" id="badge-currentmonth"></span>
+      <span class="badge" id="badge-period"></span>
+    </div>
+  </header>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="label">โควต้า อสม. ทั้งหมด</div><div class="value" id="kpi-quota">-</div><div class="sub">25 อำเภอ</div></div>
+    <div class="kpi good"><div class="label">อำเภอที่รายงานแล้ว</div><div class="value" id="kpi-reported">-</div><div class="sub" id="kpi-reported-pct">-</div></div>
+    <div class="kpi warn"><div class="label">อำเภอที่ยังไม่ส่งข้อมูล</div><div class="value" id="kpi-nodata">-</div><div class="sub">ไม่มีข้อมูลเดือนนี้</div></div>
+    <div class="kpi"><div class="label">ยอดส่งเบิกจริง</div><div class="value" id="kpi-submit">-</div><div class="sub">คน (ส่งเบิก)</div></div>
+    <div class="kpi"><div class="label">ยอดรวมทั้งหมด</div><div class="value" id="kpi-total">-</div><div class="sub">คน (รวมทุกสถานะ)</div></div>
+    <div class="kpi"><div class="label">ผลต่างสะสม (แตกต่าง)</div><div class="value" id="kpi-diff">-</div><div class="sub">รายงาน - รวม</div></div>
+  </div>
+
+  <div class="badge-row" id="period-breakdown" style="margin-bottom:20px;"></div>
+
+  <div class="alert" id="alert-nodata" style="display:none;">
+    <h3>อำเภอที่ยังไม่ส่งรายงานเดือนนี้</h3>
+    <ul id="nodata-list"></ul>
+  </div>
+
+  <div class="panel">
+    <h2>โควต้าที่รายงาน เทียบกับยอดรวมที่เบิกจ่าย (รายอำเภอ)</h2>
+    <div class="legend">
+      <span><span class="dot" style="background:#378add;"></span>โควต้าที่รายงาน (คน)</span>
+      <span><span class="dot" style="background:#1d9e75;"></span>ยอดรวมที่เบิกจ่ายจริง (คน)</span>
+      <span><span class="dot" style="background:#c3c2b7;"></span>ยังไม่มีข้อมูล</span>
+    </div>
+    <div class="chart-box" style="height:1080px;">
+      <canvas id="districtChart" role="img" aria-label="กราฟแท่งแนวนอนเปรียบเทียบโควต้าที่รายงานกับยอดรวมที่เบิกจ่ายจริงของแต่ละอำเภอ 25 อำเภอ"></canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>สัดส่วนสาเหตุที่ไม่ได้เบิกจ่ายเต็มจำนวน <span class="count" id="exception-total"></span></h2>
+    <div class="chart-box" style="height:320px;">
+      <canvas id="reasonChart" role="img" aria-label="กราฟแท่งแสดงจำนวนคนแยกตามสาเหตุที่ไม่ได้เบิกจ่ายเต็มจำนวน ได้แก่ ระงับจ่าย ลาออก อสม.ใหม่ยังไม่ครบห้วง ไม่ปฏิบัติงานหรือไม่ส่งรายงาน อื่นๆ เสียชีวิต และตกเบิก"></canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>ตารางข้อมูลรายอำเภอ</h2>
+    <div class="controls">
+      <input type="text" id="search" placeholder="ค้นหาชื่ออำเภอ...">
+      <select id="filterStatus">
+        <option value="all">ทุกสถานะ</option>
+        <option value="reported">รายงานแล้ว</option>
+        <option value="nodata">ยังไม่มีข้อมูล</option>
+      </select>
+      <select id="filterPeriod">
+        <option value="all">ทุกเดือน</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th data-key="no">ลำดับ</th>
+            <th data-key="district">อำเภอ</th>
+            <th data-key="period">เดือน/ปี</th>
+            <th data-key="quota">โควต้า อสม.</th>
+            <th data-key="reported">โควต้าที่รายงาน</th>
+            <th data-key="welfare">Welfare</th>
+            <th data-key="submit">ส่งเบิก</th>
+            <th data-key="fail">ตกเบิก</th>
+            <th data-key="suspend">ระงับจ่าย</th>
+            <th data-key="resign">ลาออก</th>
+            <th data-key="death">เสียชีวิต</th>
+            <th data-key="new_incomplete">อสม.ใหม่</th>
+            <th data-key="not_working">ไม่ปฏิบัติงาน</th>
+            <th data-key="other">อื่นๆ</th>
+            <th data-key="total">รวม</th>
+            <th data-key="diff">แตกต่าง</th>
+            <th data-key="remark">หมายเหตุ</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    ที่มา: Google Sheets "รายงานค่าป่วยการ อสม.2026_New" ชีต Database_new &middot; สร้างแดชบอร์ดเมื่อ <span id="genDate"></span><br>
+    แตกต่าง = โควต้าที่รายงาน − รวม (บวก = ยังไม่ครบตามโควต้า, ลบ = ยอดรวมเกินโควต้าที่รายงาน ควรตรวจสอบ)
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const DATA = [
+  {"no":1,"district":"เมืองอุบลราชธานี","period":"มิ.ย. 69","quota":3860,"reported":3860,"welfare":3788,"submit":3782,"fail":0,"suspend":6,"resign":2,"death":0,"new_incomplete":1,"not_working":2,"other":1,"remark":"รอพิจารณาพ้นสภาพ 1 ราย","total":3794,"diff":66,"no_data":false},
+  {"no":2,"district":"ม่วงสามสิบ","period":"พ.ค. 69","quota":1705,"reported":1705,"welfare":1705,"submit":1698,"fail":0,"suspend":1,"resign":3,"death":0,"new_incomplete":2,"not_working":0,"other":0,"remark":"-","total":1704,"diff":1,"no_data":false},
+  {"no":3,"district":"เขื่องใน","period":"มิ.ย. 69","quota":2323,"reported":2323,"welfare":2323,"submit":2313,"fail":0,"suspend":1,"resign":4,"death":2,"new_incomplete":0,"not_working":0,"other":3,"remark":"เป็น CG กระตุ้นเศรษฐกิจ 3 ราย","total":2323,"diff":0,"no_data":false},
+  {"no":4,"district":"ดอนมดแดง","period":"มิ.ย. 69","quota":482,"reported":482,"welfare":481,"submit":479,"fail":0,"suspend":2,"resign":0,"death":1,"new_incomplete":0,"not_working":2,"other":0,"remark":"ไม่อยู่ในพื้นที่ 2 ราย","total":484,"diff":-2,"no_data":false},
+  {"no":5,"district":"ตาลสุม","period":"มิ.ย. 69","quota":588,"reported":588,"welfare":587,"submit":578,"fail":0,"suspend":0,"resign":0,"death":0,"new_incomplete":1,"not_working":0,"other":0,"remark":"-","total":579,"diff":9,"no_data":false},
+  {"no":6,"district":"เหล่าเสือโก้ก","period":"มิ.ย. 69","quota":499,"reported":499,"welfare":499,"submit":498,"fail":0,"suspend":1,"resign":1,"death":0,"new_incomplete":0,"not_working":0,"other":0,"remark":"-","total":500,"diff":-1,"no_data":false},
+  {"no":7,"district":"ตระการพืชผล","period":"พ.ค. 69","quota":2151,"reported":2151,"welfare":2151,"submit":2150,"fail":0,"suspend":0,"resign":0,"death":0,"new_incomplete":0,"not_working":0,"other":1,"remark":"รอพิจารณาพ้นสภาพ 1 ราย","total":2151,"diff":0,"no_data":false},
+  {"no":8,"district":"เขมราฐ","period":null,"quota":1432,"reported":null,"welfare":null,"submit":null,"fail":null,"suspend":null,"resign":null,"death":null,"new_incomplete":null,"not_working":null,"other":null,"remark":"ไม่มีข้อมูล","total":null,"diff":null,"no_data":true},
+  {"no":9,"district":"นาตาล","period":"มิ.ย. 69","quota":745,"reported":745,"welfare":745,"submit":741,"fail":0,"suspend":2,"resign":1,"death":0,"new_incomplete":0,"not_working":2,"other":0,"remark":"ไม่อยู่ในพื้นที่/ไม่ส่งรายงาน","total":746,"diff":-1,"no_data":false},
+  {"no":10,"district":"โพธิ์ไทร","period":"มิ.ย. 69","quota":858,"reported":858,"welfare":858,"submit":856,"fail":0,"suspend":0,"resign":1,"death":0,"new_incomplete":1,"not_working":0,"other":0,"remark":"รวมลาออก/เสียชีวิต 1 ราย","total":858,"diff":0,"no_data":false},
+  {"no":11,"district":"กุดข้าวปุ้น","period":"พ.ค. 69","quota":777,"reported":777,"welfare":777,"submit":776,"fail":1,"suspend":1,"resign":0,"death":0,"new_incomplete":0,"not_working":0,"other":0,"remark":"-","total":778,"diff":-1,"no_data":false},
+  {"no":12,"district":"ศรีเมืองใหม่","period":"มิ.ย. 69","quota":1264,"reported":1264,"welfare":1255,"submit":1253,"fail":0,"suspend":1,"resign":0,"death":0,"new_incomplete":0,"not_working":1,"other":0,"remark":"ไม่อยู่ในพื้นที่ 1 ราย","total":1255,"diff":9,"no_data":false},
+  {"no":13,"district":"วารินชำราบ","period":"มิ.ย. 69","quota":2802,"reported":2802,"welfare":2802,"submit":2797,"fail":0,"suspend":3,"resign":5,"death":0,"new_incomplete":8,"not_working":3,"other":0,"remark":"-","total":2816,"diff":-14,"no_data":false},
+  {"no":14,"district":"พิบูลมังสาหาร","period":"มิ.ย. 69","quota":2738,"reported":2738,"welfare":2738,"submit":2730,"fail":0,"suspend":4,"resign":2,"death":0,"new_incomplete":0,"not_working":0,"other":2,"remark":"รอพิจารณาพ้นสภาพ 2 ราย (รวมลาออก/เสียชีวิต)","total":2738,"diff":0,"no_data":false},
+  {"no":15,"district":"โขงเจียม","period":null,"quota":683,"reported":null,"welfare":null,"submit":null,"fail":null,"suspend":null,"resign":null,"death":null,"new_incomplete":null,"not_working":null,"other":null,"remark":"ไม่มีข้อมูล","total":null,"diff":null,"no_data":true},
+  {"no":16,"district":"สิรินธร","period":null,"quota":953,"reported":null,"welfare":null,"submit":null,"fail":null,"suspend":null,"resign":null,"death":null,"new_incomplete":null,"not_working":null,"other":null,"remark":"ไม่มีข้อมูล","total":null,"diff":null,"no_data":true},
+  {"no":17,"district":"สำโรง","period":"มิ.ย. 69","quota":1001,"reported":1001,"welfare":1001,"submit":1001,"fail":0,"suspend":0,"resign":0,"death":0,"new_incomplete":0,"not_working":0,"other":0,"remark":"-","total":1001,"diff":0,"no_data":false},
+  {"no":18,"district":"สว่างวีระวงค์","period":"มิ.ย. 69","quota":572,"reported":572,"welfare":572,"submit":570,"fail":0,"suspend":0,"resign":0,"death":0,"new_incomplete":2,"not_working":0,"other":0,"remark":"-","total":572,"diff":0,"no_data":false},
+  {"no":19,"district":"นาเยีย","period":"มิ.ย. 69","quota":504,"reported":504,"welfare":504,"submit":504,"fail":0,"suspend":0,"resign":0,"death":0,"new_incomplete":0,"not_working":0,"other":0,"remark":"-","total":504,"diff":0,"no_data":false},
+  {"no":20,"district":"เดชอุดม","period":"มิ.ย. 69","quota":3401,"reported":3401,"welfare":1705,"submit":3383,"fail":0,"suspend":6,"resign":6,"death":0,"new_incomplete":2,"not_working":0,"other":4,"remark":"รอพิจารณาพ้นสภาพ 4 ราย","total":3401,"diff":0,"no_data":false},
+  {"no":21,"district":"ทุ่งศรีอุดม","period":"มิ.ย. 69","quota":561,"reported":561,"welfare":561,"submit":561,"fail":0,"suspend":0,"resign":0,"death":0,"new_incomplete":0,"not_working":0,"other":0,"remark":"-","total":561,"diff":0,"no_data":false},
+  {"no":22,"district":"น้ำยืน","period":"มิ.ย. 69","quota":1289,"reported":1289,"welfare":1289,"submit":1282,"fail":0,"suspend":7,"resign":2,"death":1,"new_incomplete":0,"not_working":4,"other":0,"remark":"-","total":1296,"diff":-7,"no_data":false},
+  {"no":23,"district":"น้ำขุ่น","period":"มิ.ย. 69","quota":719,"reported":719,"welfare":719,"submit":712,"fail":0,"suspend":4,"resign":2,"death":1,"new_incomplete":1,"not_working":3,"other":0,"remark":"-","total":723,"diff":-4,"no_data":false},
+  {"no":24,"district":"นาจะหลวย","period":"มิ.ย. 69","quota":1089,"reported":1089,"welfare":1089,"submit":1086,"fail":2,"suspend":0,"resign":1,"death":0,"new_incomplete":2,"not_working":0,"other":0,"remark":"-","total":1091,"diff":-2,"no_data":false},
+  {"no":25,"district":"บุณฑริก","period":null,"quota":1685,"reported":null,"welfare":null,"submit":null,"fail":null,"suspend":null,"resign":null,"death":null,"new_incomplete":null,"not_working":null,"other":null,"remark":"ไม่มีข้อมูล","total":null,"diff":null,"no_data":true}
+];
+
+function fmt(n){ return (n===null||n===undefined) ? '-' : n.toLocaleString('th-TH'); }
+
+const reported = DATA.filter(d=>!d.no_data);
+const noData = DATA.filter(d=>d.no_data);
+
+const totalQuota = DATA.reduce((s,d)=>s+d.quota,0);
+const totalReported = reported.reduce((s,d)=>s+d.reported,0);
+const totalSubmit = reported.reduce((s,d)=>s+d.submit,0);
+const totalTotal = reported.reduce((s,d)=>s+d.total,0);
+const totalDiff = reported.reduce((s,d)=>s+d.diff,0);
+
+document.getElementById('kpi-quota').textContent = fmt(totalQuota) + ' คน';
+document.getElementById('kpi-reported').textContent = reported.length + ' / 25';
+document.getElementById('kpi-reported-pct').textContent = Math.round(reported.length/25*100) + '% ของอำเภอทั้งหมด';
+document.getElementById('kpi-nodata').textContent = noData.length + ' อำเภอ';
+document.getElementById('kpi-submit').textContent = fmt(totalSubmit) + ' คน';
+document.getElementById('kpi-total').textContent = fmt(totalTotal) + ' คน';
+document.getElementById('kpi-diff').textContent = (totalDiff>=0?'+':'') + fmt(totalDiff) + ' คน';
+
+document.getElementById('genDate').textContent = new Date().toLocaleString('th-TH', {dateStyle:'long', timeStyle:'short'});
+
+const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const now = new Date();
+const currentMonthLabel = thaiMonths[now.getMonth()] + ' ' + (now.getFullYear()+543);
+document.getElementById('badge-currentmonth').textContent = 'เดือนปัจจุบัน: ' + currentMonthLabel;
+
+const periodCounts = {};
+DATA.forEach(d=>{
+  const key = d.no_data ? 'ไม่มีข้อมูล' : d.period;
+  periodCounts[key] = (periodCounts[key]||0) + 1;
+});
+const periodOrder = Object.keys(periodCounts).sort((a,b)=> a==='ไม่มีข้อมูล' ? 1 : b==='ไม่มีข้อมูล' ? -1 : 0);
+document.getElementById('badge-period').textContent = 'อำเภอที่รายงานอ้างอิงเดือน: ' + periodOrder.filter(k=>k!=='ไม่มีข้อมูล').join(', ');
+document.getElementById('period-breakdown').innerHTML = periodOrder.map(k=>
+  `<span class="badge">${k}: ${periodCounts[k]} อำเภอ</span>`
+).join('');
+
+const periodSelect = document.getElementById('filterPeriod');
+periodOrder.forEach(k=>{
+  const opt = document.createElement('option');
+  opt.value = k;
+  opt.textContent = k;
+  periodSelect.appendChild(opt);
+});
+
+if(noData.length){
+  document.getElementById('alert-nodata').style.display='block';
+  document.getElementById('nodata-list').innerHTML = noData.map(d=>`<li>${d.district} (โควต้า ${fmt(d.quota)} คน)</li>`).join('');
+}
+
+const districtLabels = DATA.map(d=>d.district);
+const quotaValues = DATA.map(d=>d.no_data ? d.quota : d.reported);
+const totalValues = DATA.map(d=>d.no_data ? null : d.total);
+
+new Chart(document.getElementById('districtChart'), {
+  type:'bar',
+  data:{
+    labels:districtLabels,
+    datasets:[
+      {label:'โควต้าที่รายงาน', data:quotaValues, backgroundColor: DATA.map(d=>d.no_data?'#c3c2b7':'#378add'), borderRadius:3, maxBarThickness:16},
+      {label:'ยอดรวมที่เบิกจ่ายจริง', data:totalValues, backgroundColor:'#1d9e75', borderRadius:3, maxBarThickness:16}
+    ]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:(ctx)=> ctx.dataset.label + ': ' + (ctx.raw===null?'ไม่มีข้อมูล':ctx.raw.toLocaleString('th-TH')) + ' คน'}}},
+    scales:{
+      x:{beginAtZero:true, grid:{color:'#e1e0d9'}, ticks:{color:'#5f5e5a'}},
+      y:{grid:{display:false}, ticks:{color:'#2c2c2a', font:{size:11.5}}}
+    }
+  }
+});
+
+const reasons = [
+  {label:'ระงับจ่าย', value: reported.reduce((s,d)=>s+d.suspend,0)},
+  {label:'ลาออก', value: reported.reduce((s,d)=>s+d.resign,0)},
+  {label:'อสม.ใหม่ยังไม่ครบห้วง', value: reported.reduce((s,d)=>s+d.new_incomplete,0)},
+  {label:'ไม่ปฏิบัติงาน/ไม่ส่งรายงาน', value: reported.reduce((s,d)=>s+d.not_working,0)},
+  {label:'อื่นๆ', value: reported.reduce((s,d)=>s+d.other,0)},
+  {label:'เสียชีวิต', value: reported.reduce((s,d)=>s+d.death,0)},
+  {label:'ตกเบิก', value: reported.reduce((s,d)=>s+d.fail,0)}
+];
+const reasonTotal = reasons.reduce((s,r)=>s+r.value,0);
+document.getElementById('exception-total').textContent = '(รวม ' + reasonTotal.toLocaleString('th-TH') + ' คน)';
+
+new Chart(document.getElementById('reasonChart'), {
+  type:'bar',
+  data:{
+    labels: reasons.map(r=>r.label),
+    datasets:[{data: reasons.map(r=>r.value), backgroundColor:'#d85a30', borderRadius:4, maxBarThickness:36}]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:(ctx)=> ctx.raw.toLocaleString('th-TH') + ' คน'}}},
+    scales:{
+      x:{ticks:{color:'#5f5e5a', autoSkip:false, maxRotation:20, font:{size:11}}, grid:{display:false}},
+      y:{beginAtZero:true, grid:{color:'#e1e0d9'}, ticks:{color:'#5f5e5a'}}
+    }
+  }
+});
+
+let sortKey = 'no', sortDir = 1;
+function renderTable(){
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const status = document.getElementById('filterStatus').value;
+  const period = document.getElementById('filterPeriod').value;
+  let rows = DATA.filter(d=>{
+    if(q && !d.district.toLowerCase().includes(q)) return false;
+    if(status==='reported' && d.no_data) return false;
+    if(status==='nodata' && !d.no_data) return false;
+    if(period!=='all'){
+      const key = d.no_data ? 'ไม่มีข้อมูล' : d.period;
+      if(key!==period) return false;
+    }
+    return true;
+  });
+  rows = rows.slice().sort((a,b)=>{
+    let va=a[sortKey], vb=b[sortKey];
+    if(va===null) va = sortKey==='district'||sortKey==='period'||sortKey==='remark' ? '' : -Infinity;
+    if(vb===null) vb = sortKey==='district'||sortKey==='period'||sortKey==='remark' ? '' : -Infinity;
+    if(typeof va === 'string') return va.localeCompare(vb,'th')*sortDir;
+    return (va-vb)*sortDir;
+  });
+  document.getElementById('tableBody').innerHTML = rows.map(d=>{
+    const diffClass = d.diff===null ? '' : d.diff>0 ? 'diff-pos' : d.diff<0 ? 'diff-neg' : 'diff-zero';
+    const diffText = d.diff===null ? '-' : (d.diff>0?'+':'') + fmt(d.diff);
+    return `<tr class="${d.no_data?'no-data':''}">
+      <td>${d.no}</td>
+      <td>${d.district} ${d.no_data?'<span class="tag no">ไม่มีข้อมูล</span>':''}</td>
+      <td>${d.period ?? '-'}</td>
+      <td class="num">${fmt(d.quota)}</td>
+      <td class="num">${fmt(d.reported)}</td>
+      <td class="num">${fmt(d.welfare)}</td>
+      <td class="num">${fmt(d.submit)}</td>
+      <td class="num">${fmt(d.fail)}</td>
+      <td class="num">${fmt(d.suspend)}</td>
+      <td class="num">${fmt(d.resign)}</td>
+      <td class="num">${fmt(d.death)}</td>
+      <td class="num">${fmt(d.new_incomplete)}</td>
+      <td class="num">${fmt(d.not_working)}</td>
+      <td class="num">${fmt(d.other)}</td>
+      <td class="num">${fmt(d.total)}</td>
+      <td class="num ${diffClass}">${diffText}</td>
+      <td>${d.remark ?? '-'}</td>
+    </tr>`;
+  }).join('');
+}
+document.getElementById('search').addEventListener('input', renderTable);
+document.getElementById('filterStatus').addEventListener('change', renderTable);
+document.getElementById('filterPeriod').addEventListener('change', renderTable);
+document.querySelectorAll('#dataTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(sortKey===key) sortDir*=-1; else {sortKey=key; sortDir=1;}
+    renderTable();
+  });
+});
+renderTable();
+</script>
+</body>
+</html>
